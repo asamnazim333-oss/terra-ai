@@ -96,31 +96,28 @@ elif menu == "🛰 Satellite Insights":
                 st.error(f"Error fetching location: {e}")
 
             if geo_res and len(geo_res) > 0:
-                lat = geo_res[0]["lat"]
-                lon = geo_res[0]["lon"]
-                st.success(f"Coordinates: {lat}, {lon}")
+    # Convert to float and round
+    lat = round(float(geo_res[0]["lat"]), 3)
+    lon = round(float(geo_res[0]["lon"]), 3)
+    st.success(f"Coordinates: {lat}, {lon}")
 
-                # Fetch NASA POWER data
-                with st.spinner("Fetching NASA data..."):
-                    try:
-                        nasa_url = (
-                            f"https://power.larc.nasa.gov/api/temporal/daily/point?"
-                            f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
-                        )
-                        nasa_res = requests.get(nasa_url, timeout=10).json()
+    with st.spinner("Fetching NASA data..."):
+        try:
+            nasa_url = (
+                f"https://power.larc.nasa.gov/api/temporal/daily/point?"
+                f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
+            )
+            nasa_res = requests.get(nasa_url, timeout=10).json()
 
-                        if "properties" in nasa_res and "parameter" in nasa_res["properties"]:
-                            data = nasa_res["properties"]["parameter"]
-                            st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
-                            st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
-                        else:
-                            st.error("NASA data not available for this location.")
-
-                    except Exception as e:
-                        st.error(f"Error fetching NASA data: {e}")
-
+            if "properties" in nasa_res and "parameter" in nasa_res["properties"]:
+                data = nasa_res["properties"]["parameter"]
+                st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
+                st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
             else:
-                st.error("City not found or invalid response from location service.")
+                st.warning("NASA data not available for this exact location. Try a nearby city.")
+
+        except Exception as e:
+            st.error(f"Error fetching NASA data: {e}")
             
 
 # ================= AI ADVISORY =================
