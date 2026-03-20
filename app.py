@@ -1,15 +1,13 @@
 import streamlit as st
 import requests
-import os
-from datetime import datetime
 from PIL import Image
 from openai import OpenAI
 from google import genai
 
 # ================= CONFIG =================
-st.set_page_config(page_title="🌍 ZameenAI Global", layout="wide")
+st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
 
-# ================= API KEYS =================
+# ================= KEYS =================
 OPENWEATHER_API_KEY = st.secrets["OPENWEATHER_API_KEY"]
 
 groq_client = OpenAI(
@@ -20,63 +18,82 @@ groq_client = OpenAI(
 gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 # ================= HEADER =================
-st.title("🌍 ZameenAI Global")
-st.caption("AI Copilot for Smart Farming")
+st.title("🌍 Terra-AI")
+st.caption("Global AI Copilot for Smart Farming")
 
-# ================= SIDEBAR =================
-menu = st.sidebar.radio("Navigation", [
+# ================= GLOBAL MODE =================
+country = st.selectbox("🌎 Select Country", ["USA", "Pakistan", "India"])
+
+# ================= MENU =================
+menu = st.sidebar.radio("Menu", [
     "🌦 Weather Intelligence",
-    "📊 Market Prices",
+    "🛰 Satellite Insights",
     "🤖 AI Advisory",
     "🦠 Disease Detection",
     "💬 AI Copilot",
-    "📈 Yield Predictor"
+    "📈 Yield Predictor",
 ])
 
-# ================= WEATHER =================
+# ================= WEATHER (7 DAY) =================
 if menu == "🌦 Weather Intelligence":
-    st.header("🌦 Smart Weather Insights")
+    st.header("🌦 7-Day Weather Forecast")
 
     city = st.text_input("Enter City")
 
-    if st.button("Get Weather"):
-        with st.spinner("Fetching weather..."):
-            url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_API_KEY}&units=metric"
+    if st.button("Get Forecast"):
+        with st.spinner("Fetching data..."):
+            url = f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={OPENWEATHER_API_KEY}&units=metric"
             res = requests.get(url).json()
 
-            if res.get("cod") == 200:
-                col1, col2, col3 = st.columns(3)
+            if res.get("cod") == "200":
+                for i in range(0, 40, 8):
+                    day = res["list"][i]
 
-                col1.metric("🌡 Temp", f"{res['main']['temp']}°C")
-                col2.metric("💧 Humidity", f"{res['main']['humidity']}%")
-                col3.metric("💨 Wind", f"{res['wind']['speed']} m/s")
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("Temp", f"{day['main']['temp']}°C")
+                    col2.metric("Humidity", f"{day['main']['humidity']}%")
+                    col3.metric("Wind", f"{day['wind']['speed']} m/s")
 
-                st.info(f"Condition: {res['weather'][0]['description']}")
+                    st.write(day["weather"][0]["description"])
 
-                # Smart Alerts
-                if res['main']['temp'] > 35:
-                    st.warning("🔥 Heat stress risk for crops!")
-                if res['main']['temp'] < 5:
-                    st.warning("❄️ Frost risk!")
+                    # Alerts
+                    if day['main']['temp'] > 35:
+                        st.warning("🔥 Heat Stress Alert")
+                    if day['main']['temp'] < 5:
+                        st.warning("❄️ Frost Alert")
+                    if "rain" in day["weather"][0]["description"]:
+                        st.info("🌧 Rain Expected")
 
+                    st.divider()
             else:
                 st.error("City not found")
 
-# ================= MARKET =================
-elif menu == "📊 Market Prices":
-    st.header("📊 Market Insights")
+# ================= SATELLITE =================
+elif menu == "🛰 Satellite Insights":
+    st.header("🛰 Satellite Weather Insights (NASA)")
 
-    st.info("Demo market data (replace with USDA API later)")
+    lat = st.number_input("Latitude", value=30.0)
+    lon = st.number_input("Longitude", value=70.0)
 
-    crops = ["Wheat", "Rice", "Maize", "Cotton"]
-    price = [4000, 4500, 3500, 8500]
+    if st.button("Get Data"):
+        with st.spinner("Fetching NASA data..."):
+            url = f"https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
+            res = requests.get(url).json()
 
-    for i in range(len(crops)):
-        st.metric(crops[i], f"Rs {price[i]}")
+            try:
+                data = res["properties"]["parameter"]
+
+                st.success("NASA Data Loaded")
+
+                st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
+                st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
+
+            except:
+                st.error("Error fetching NASA data")
 
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
-    st.header("🤖 Smart Farming Advisor")
+    st.header("🤖 Smart Advisory")
 
     crop = st.text_input("Crop")
     soil = st.selectbox("Soil", ["Sandy", "Clay", "Loamy"])
@@ -84,26 +101,31 @@ elif menu == "🤖 AI Advisory":
 
     if st.button("Generate Advice"):
         prompt = f"""
-        Give professional farming advice:
+        Country: {country}
         Crop: {crop}
         Soil: {soil}
         Weather: {weather}
+
+        Give advanced farming advice including:
+        - Fertilizer
+        - Irrigation
+        - Risk alerts
         """
 
-        with st.spinner("Thinking..."):
+        with st.spinner("AI thinking..."):
             response = groq_client.responses.create(
                 model="openai/gpt-oss-20b",
                 input=prompt,
-                max_output_tokens=500
+                max_output_tokens=600
             )
 
             st.success(response.output_text)
 
-# ================= DISEASE DETECTION =================
+# ================= DISEASE =================
 elif menu == "🦠 Disease Detection":
-    st.header("🦠 Crop Disease Detection")
+    st.header("🦠 AI Disease Detection")
 
-    image = st.file_uploader("Upload leaf image", type=["jpg", "png"])
+    image = st.file_uploader("Upload crop image", type=["jpg", "png"])
 
     if image:
         img = Image.open(image)
@@ -112,7 +134,7 @@ elif menu == "🦠 Disease Detection":
         if st.button("Analyze"):
             with st.spinner("Analyzing..."):
                 prompt = """
-                Identify plant disease, give reason and treatment.
+                Identify disease, give confidence %, cause and treatment.
                 """
 
                 response = gemini_client.models.generate_content(
@@ -122,9 +144,9 @@ elif menu == "🦠 Disease Detection":
 
                 st.success(response.text)
 
-# ================= AI CHATBOT =================
+# ================= CHATBOT =================
 elif menu == "💬 AI Copilot":
-    st.header("💬 AI Farming Copilot")
+    st.header("💬 AI Farm Copilot")
 
     if "chat" not in st.session_state:
         st.session_state.chat = []
@@ -132,7 +154,7 @@ elif menu == "💬 AI Copilot":
     for msg in st.session_state.chat:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    user_input = st.chat_input("Ask anything about farming...")
+    user_input = st.chat_input("Ask farming question...")
 
     if user_input:
         st.session_state.chat.append({"role": "user", "content": user_input})
@@ -150,16 +172,15 @@ elif menu == "💬 AI Copilot":
         st.session_state.chat.append({"role": "assistant", "content": reply})
         st.chat_message("assistant").write(reply)
 
-# ================= YIELD PREDICTOR =================
+# ================= YIELD =================
 elif menu == "📈 Yield Predictor":
-    st.header("📈 AI Yield Estimator")
+    st.header("📈 Smart Yield Prediction")
 
     area = st.number_input("Land (acres)", 1)
-    rainfall = st.slider("Rainfall (mm)", 0, 500, 100)
-    temp = st.slider("Temperature (°C)", 0, 50, 25)
+    rainfall = st.slider("Rainfall", 0, 500, 100)
+    temp = st.slider("Temperature", 0, 50, 25)
 
-    if st.button("Predict Yield"):
-        # Simple ML logic (replace with model later)
-        yield_est = (area * 30) + (rainfall * 0.1) - (temp * 0.5)
+    if st.button("Predict"):
+        yield_est = (area * 30) + (rainfall * 0.2) - (temp * 0.7)
 
-        st.success(f"Estimated Yield: {round(yield_est,2)} units")
+        st.success(f"Estimated Yield: {round(yield_est,2)}")
