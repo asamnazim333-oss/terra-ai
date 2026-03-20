@@ -19,8 +19,9 @@ groq_client = OpenAI(
     api_key=st.secrets["GROQ_API_KEY"],
     base_url="https://api.groq.com/openai/v1"
 )
+import os
+import google.generativeai as genai
 
-from google import genai
 gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # ================= HEADER =================
