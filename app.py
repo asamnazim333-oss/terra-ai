@@ -48,10 +48,10 @@ menu = st.sidebar.radio("Menu", [
 
 #================= WEATHER (7 DAY) =================
 
-if menu == "🌦 Weather Intelligence":
-st.header("🌦 7-Day Weather Forecast")
+ if menu == "🌦 Weather Intelligence":
+    st.header("🌦 7-Day Weather Forecast")
 
-city = st.text_input("Enter City")  
+    city = st.text_input("Enter City")  
 
 if st.button("Get Forecast"):  
     with st.spinner("Fetching data..."):  
