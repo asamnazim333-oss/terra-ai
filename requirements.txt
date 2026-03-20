@@ -6,4 +6,4 @@ pandas
 folium
 streamlit-folium
 Pillow
-google-generativeai==0.15.0
+google-generativeai
