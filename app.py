@@ -41,6 +41,7 @@ menu = st.sidebar.radio("Menu", [
     "💬 AI Copilot",
     "📈 Yield Predictor",
     "📅 Crop Calendar",
+    "📈 Market & Profit",
 ])
 
 # ================= WEATHER =================
@@ -337,6 +338,70 @@ elif menu == "📅 Crop Calendar":
             st.warning(f"🌾 {crop} — Use: {use}")
     else:
         st.write("No major harvesting crop this month.")
+
+
+#=========== Market Price and estimator===
+
+
+
+elif menu == "📈 Market & Profit":
+    st.subheader("📈 Market Price & Profit Predictor")
+
+    # 1️⃣ Select Country
+    country = st.selectbox("Select Country", ["Pakistan", "USA", "India"])
+
+    # 2️⃣ Define crop prices for each country (per acre or per unit)
+    crop_prices = {
+        "Pakistan": {
+            "Wheat": 3900,
+            "Rice": 4500,
+            "Maize": 3500,
+            "Sugarcane": 3000,
+            "Cotton": 8500,
+            "Barley": 2800,
+            "Tomato": 6000,
+            "Potato": 4500
+        },
+        "USA": {
+            "Wheat": 250,      # Prices in USD
+            "Rice": 300,
+            "Maize": 220,
+            "Sugarcane": 180,
+            "Cotton": 500,
+            "Barley": 150,
+            "Tomato": 350,
+            "Potato": 200
+        },
+        "India": {
+            "Wheat": 2000,     # Prices in INR
+            "Rice": 2500,
+            "Maize": 1800,
+            "Sugarcane": 1500,
+            "Cotton": 4000,
+            "Barley": 1200,
+            "Tomato": 2500,
+            "Potato": 2000
+        }
+    }
+
+    # 3️⃣ Currency symbol for display
+    currency = {"Pakistan": "Rs", "USA": "$", "India": "₹"}
+
+    # 4️⃣ Select crop and area
+    prices = crop_prices[country]
+    crop = st.selectbox("Select Crop", list(prices.keys()))
+    area = st.number_input("Enter land area (acres)", min_value=1)
+
+    # 5️⃣ Calculate profit
+    if st.button("Predict Profit"):
+        avg_yield = 30  # average yield per acre
+        revenue = avg_yield * area * prices[crop]
+        cost = 50000 * area if country != "USA" else 2000 * area  # Example cost difference
+        profit = revenue - cost
+
+        st.success(f"💰 Revenue: {currency[country]} {revenue}")
+        st.warning(f"📉 Cost: {currency[country]} {cost}")
+        st.info(f"🏆 Profit: {currency[country]} {profit}")
 # ================= YIELD =================
 elif menu == "📈 Yield Predictor":
     st.header("📈 Smart Yield Prediction")
