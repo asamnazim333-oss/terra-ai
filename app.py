@@ -175,8 +175,7 @@ elif menu == "🦠 Disease Detection":
                       st.warning("Gemini failed → using backup AI")
                  # fallback model here
 
-                    prompt = """
-                    Identify plant disease, give confidence %, cause and treatment.
+                    prompt = """ Identify plant disease, give confidence %, cause and treatment.
                     """
 
                     response = model.generate_content([prompt, img])
