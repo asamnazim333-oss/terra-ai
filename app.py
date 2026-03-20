@@ -166,8 +166,7 @@ elif menu == "🦠 Disease Detection":
                 st.error("Gemini API key missing")
             else:
                 with st.spinner("Analyzing..."):
-
-                    try:
+try:
     model = genai.GenerativeModel("gemini-pro-vision")
     response = model.generate_content([prompt, img])
     st.markdown(response.text)
