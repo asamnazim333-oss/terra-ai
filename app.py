@@ -34,8 +34,6 @@ st.title("🌍 Terra-AI")
 st.caption("Global AI Copilot for Smart Farming")
 
 
-st.write(pkg_resources.get_distribution("google-generativeai").version)
-
 # ================= GLOBAL MODE =================
 country = st.selectbox("🌎 Select Country", ["USA", "Pakistan", "India"])
 
