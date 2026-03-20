@@ -8,6 +8,7 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import os
+import pkg_resources
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
@@ -27,6 +28,9 @@ if GEMINI_API_KEY:
 # ================= HEADER =================
 st.title("🌍 Terra-AI")
 st.caption("Global AI Copilot for Smart Farming")
+
+
+st.write(pkg_resources.get_distribution("google-generativeai").version)
 
 # ================= GLOBAL MODE =================
 country = st.selectbox("🌎 Select Country", ["USA", "Pakistan", "India"])
@@ -144,11 +148,7 @@ elif menu == "🤖 AI Advisory":
 # ================= DISEASE =================
 elif menu == "🦠 Disease Detection":
     st.subheader("🦠 Crop Disease Detection")
-    st.write("Upload or capture a leaf image")
-   import google.generativeai as genai
-import pkg_resources
-
-st.write(pkg_resources.get_distribution("google-generativeai").version)
+    
     with st.form("disease_form"):
         cam = st.camera_input("Camera")
         file = st.file_uploader("Upload", type=["jpg", "png", "jpeg"])
