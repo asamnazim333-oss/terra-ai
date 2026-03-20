@@ -4,6 +4,9 @@ from PIL import Image
 from openai import OpenAI
 import google.generativeai as genai
 import urllib.parse
+import pandas as pd
+import folium
+from streamlit_folium import st_folium
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
@@ -72,50 +75,69 @@ if menu == "🌦 Weather Intelligence":
 # ================= SATELLITE =================
 
 
+
+
 elif menu == "🛰 Satellite Insights":
-    st.header("🛰 Satellite Weather Insights (NASA)")
+    st.header("🛰 Satellite Weather & Crop Insights")
 
-    geo_res = None  # initialize variable
-
+    geo_res = None
     city_name = st.text_input("Enter City Name")
 
     if st.button("Get Data"):
         with st.spinner("Fetching coordinates..."):
-            # Encode city name safely
+            # Encode city name
             city_encoded = urllib.parse.quote(city_name)
             geo_url = f"https://nominatim.openstreetmap.org/search?city={city_encoded}&format=json"
-
             headers = {"User-Agent": "terra-ai-hackathon-app"}
 
             try:
                 res = requests.get(geo_url, headers=headers, timeout=10)
                 geo_res = res.json()
-            except requests.exceptions.JSONDecodeError:
-                st.error("Error decoding location data. Nominatim may have rejected the request.")
-            except requests.exceptions.RequestException as e:
+            except Exception as e:
                 st.error(f"Error fetching location: {e}")
+                geo_res = None
 
-        # Only proceed if geo_res is valid
         if geo_res and len(geo_res) > 0:
-            # Convert lat/lon to float and round
             lat = round(float(geo_res[0]["lat"]), 3)
             lon = round(float(geo_res[0]["lon"]), 3)
             st.success(f"Coordinates: {lat}, {lon}")
 
-            with st.spinner("Fetching NASA data..."):
+            # Interactive map
+            m = folium.Map(location=[lat, lon], zoom_start=10)
+            folium.Marker([lat, lon], popup=city_name).add_to(m)
+            st_folium(m, width=700, height=400)
+
+            # NASA POWER API
+            with st.spinner("Fetching NASA POWER data..."):
                 try:
+                    # Daily data for last 7 days
+                    from datetime import datetime, timedelta
+                    end_date = datetime.utcnow().date()
+                    start_date = end_date - timedelta(days=6)
+                    start_str = start_date.strftime("%Y%m%d")
+                    end_str = end_date.strftime("%Y%m%d")
+
                     nasa_url = (
                         f"https://power.larc.nasa.gov/api/temporal/daily/point?"
-                        f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
+                        f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}"
+                        f"&start={start_str}&end={end_str}&format=JSON"
                     )
+
                     nasa_res = requests.get(nasa_url, timeout=10).json()
 
                     if "properties" in nasa_res and "parameter" in nasa_res["properties"]:
                         data = nasa_res["properties"]["parameter"]
-                        st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
-                        st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
+                        # Convert to DataFrame for chart
+                        df = pd.DataFrame({
+                            "date": list(data["T2M"].keys()),
+                            "temperature": list(data["T2M"].values()),
+                            "rainfall": list(data["PRECTOT"].values())
+                        })
+                        df["date"] = pd.to_datetime(df["date"])
+                        st.subheader("📊 Last 7 Days Weather")
+                        st.line_chart(df.set_index("date")[["temperature", "rainfall"]])
                     else:
-                        st.warning("NASA data not available for this exact location. Try a nearby city.")
+                        st.warning("NASA data not available for this location. Try a nearby city.")
                 except Exception as e:
                     st.error(f"Error fetching NASA data: {e}")
         else:
