@@ -133,15 +133,14 @@ elif menu == "🦠 Disease Detection":
 
         if st.button("Analyze"):
             with st.spinner("Analyzing..."):
-                prompt = """
-                Identify disease, give confidence %, cause and treatment.
-                """
-
                 model = genai.GenerativeModel("gemini-1.5-flash")
 
-response = model.generate_content([prompt, img])
+                response = model.generate_content([
+                    "Identify disease, give confidence %, cause and treatment.",
+                    img
+                ])
 
-                st.success(response.text)
+            st.success(response.text)
 
 # ================= CHATBOT =================
 elif menu == "💬 AI Copilot":
