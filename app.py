@@ -8,6 +8,8 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 from datetime import datetime, timedelta
+import os
+import google.generativeai as genai
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
@@ -19,8 +21,7 @@ groq_client = OpenAI(
     api_key=st.secrets["GROQ_API_KEY"],
     base_url="https://api.groq.com/openai/v1"
 )
-import os
-import google.generativeai as genai
+
 
 gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
