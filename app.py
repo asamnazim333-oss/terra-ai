@@ -8,25 +8,7 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import os
-import importlib.metadata as importlib_metadata
-import streamlit as st
 
-
-st.write("Google GenerativeAI version:", importlib_metadata.version("google-generativeai"))
-
-import google.generativeai as genai
-import streamlit as st
-import os
-
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
-
-st.subheader("Available Gemini Models")
-models = genai.list_models()
-
-for m in models:
-    # Safely display the model object
-    st.write(m)
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
 
@@ -161,9 +143,11 @@ elif menu == "🤖 AI Advisory":
         st.success(response.output_text)
 
 # ================= DISEASE =================
+# ================= DISEASE DETECTION =================
 elif menu == "🦠 Disease Detection":
     st.subheader("🦠 Crop Disease Detection")
-    
+    st.write("Upload or capture a leaf image")
+
     with st.form("disease_form"):
         cam = st.camera_input("Camera")
         file = st.file_uploader("Upload", type=["jpg", "png", "jpeg"])
@@ -173,6 +157,7 @@ elif menu == "🦠 Disease Detection":
 
     if img_file and submit:
         try:
+            # Open and resize image
             img = Image.open(img_file)
             img.thumbnail((1024, 1024))
             st.image(img, width=300)
@@ -181,21 +166,31 @@ elif menu == "🦠 Disease Detection":
                 st.error("Gemini API key missing")
             else:
                 with st.spinner("Analyzing..."):
-                    prompt = "Identify plant disease, give confidence %, cause and treatment."
+                    # Prompt for disease detection
+                    prompt = """
+                    Identify the plant disease in the image.
+                    Provide:
+                    - Disease Name
+                    - Confidence %
+                    - Possible Cause
+                    - Treatment/Remedy
+                    """
 
                     try:
-                        model = genai.GenerativeModel("gemini-pro-vision")
+                        # Use the correct model
+                        model = genai.GenerativeModel("models/gemini-2.5-flash")
                         response = model.generate_content([prompt, img])
 
-                        st.success("✅ Result")
+                        st.success("✅ Disease Analysis Result")
                         st.markdown(response.text)
 
                     except Exception as e:
-                        st.warning("Gemini failed")
+                        st.warning("⚠ Gemini model failed")
                         st.error(e)
 
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Error processing image: {e}")
+                        
 
 # ================= CHATBOT =================
 elif menu == "💬 AI Copilot":
