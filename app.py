@@ -55,16 +55,20 @@ if menu == "🌦 Weather Intelligence":
             res = requests.get(url).json()
 
             if res.get("cod") == "200":
+                # The API returns 3-hour interval forecasts, so pick every 8th entry ≈ 24h
                 for i in range(0, 40, 8):
                     day = res["list"][i]
+                    date_txt = day["dt_txt"].split(" ")[0]  # Extract date YYYY-MM-DD
+                    st.subheader(f"📅 Date: {date_txt}")
 
                     col1, col2, col3 = st.columns(3)
-                    col1.metric("Temp", f"{day['main']['temp']}°C")
-                    col2.metric("Humidity", f"{day['main']['humidity']}%")
-                    col3.metric("Wind", f"{day['wind']['speed']} m/s")
+                    col1.metric("🌡 Temp", f"{day['main']['temp']}°C")
+                    col2.metric("💧 Humidity", f"{day['main']['humidity']}%")
+                    col3.metric("💨 Wind", f"{day['wind']['speed']} m/s")
 
-                    st.write(day["weather"][0]["description"])
+                    st.write(f"Weather: {day['weather'][0]['description'].title()}")
 
+                    # Alerts
                     if day['main']['temp'] > 35:
                         st.warning("🔥 Heat Stress Alert")
                     if day['main']['temp'] < 5:
