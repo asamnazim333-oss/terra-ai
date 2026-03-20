@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from PIL import Image
 from openai import OpenAI
-from google import genai
+import google.generativeai as genai
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
@@ -15,7 +15,7 @@ groq_client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+gemini_client = genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # ================= HEADER =================
 st.title("🌍 Terra-AI")
@@ -137,10 +137,9 @@ elif menu == "🦠 Disease Detection":
                 Identify disease, give confidence %, cause and treatment.
                 """
 
-                response = gemini_client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[prompt, img]
-                )
+                model = genai.GenerativeModel("gemini-1.5-flash")
+
+response = model.generate_content([prompt, img])
 
                 st.success(response.text)
 
