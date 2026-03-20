@@ -43,6 +43,7 @@ menu = st.sidebar.radio("Menu", [
     "📅 Crop Calendar",
     "📈 Market & Profit",
     "🌾 Crop Estimator",
+    "🧪 Fertilizer AI",
 ])
 
 # ================= WEATHER =================
@@ -484,6 +485,50 @@ elif menu == "🌾 Crop Estimator":
 
         st.success(f"💰 Estimated Cost: {currency[country]} {total_cost}")
         st.info(f"🌾 Expected Yield: {total_yield} maunds")
+
+
+
+
+#======/Fertilizer AI =========
+
+elif menu == "🧪 Fertilizer AI":
+    st.subheader("🧪 Smart Fertilizer Recommendation")
+
+    # 1️⃣ Crop input
+    crop = st.text_input("Enter crop name")
+
+    # 2️⃣ Fertilizer recommendations dictionary
+    fertilizer_recs = {
+        "wheat": "Use Urea + DAP. Apply Nitrogen in split doses.",
+        "rice": "Apply NPK 20-20-20 and maintain flooded field.",
+        "maize": "Use NPK 16-16-16 and apply Zinc if deficient.",
+        "cotton": "Apply Nitrogen + Potash; add gypsum for soil health.",
+        "sugarcane": "Use NPK 10-10-20 with organic manure.",
+        "barley": "Apply Urea + NPK 12-12-17; ensure proper irrigation.",
+        "tomato": "Use NPK 10-10-10 with compost; foliar feeding recommended.",
+        "potato": "Apply NPK 15-15-15 and maintain soil moisture.",
+        "onion": "Use Nitrogen + Potash; apply Boron if needed.",
+        "chili": "Apply NPK 20-20-20 with organic mulch.",
+        "mustard": "Use DAP + Urea; apply Sulphur if soil deficient.",
+        "soybean": "Apply Rhizobium inoculant and balanced NPK.",
+        "sugar beet": "Use NPK 15-15-15; monitor pH for best yield.",
+        "carrot": "Apply NPK 10-20-10; compost helps root growth.",
+        "peas": "Apply Rhizobium + NPK 12-12-12 for better pods.",
+        "maize-sorghum": "Use Urea + NPK 16-16-16; ensure irrigation.",
+        "sunflower": "Apply NPK 20-10-10; add Boron for flowering.",
+        "cabbage": "Use NPK 15-15-15 and organic compost.",
+        "okra": "Apply NPK 10-10-20 with compost; split Nitrogen doses.",
+        "millet": "Use NPK 12-12-12; apply Potash for better grain."
+    }
+
+    # 3️⃣ Button click
+    if st.button("Get Recommendation"):
+        crop_lower = crop.strip().lower()
+        rec = fertilizer_recs.get(
+            crop_lower,
+            "Use balanced NPK fertilizer with organic compost for this crop."
+        )
+        st.success(rec)
 # ================= YIELD =================
 elif menu == "📈 Yield Predictor":
     st.header("📈 Smart Yield Prediction")
