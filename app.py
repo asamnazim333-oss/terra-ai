@@ -229,7 +229,7 @@ elif menu == "🦠 Disease Detection":
                         
 
 # ================= CHATBOT =================
-elif menu == "💬 Chatbot":
+elif menu == "💬 AI Copilot":
 
     st.subheader("💬 Farming Assistant Chatbot")
 
