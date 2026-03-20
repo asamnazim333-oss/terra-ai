@@ -158,7 +158,9 @@ elif menu == "🛰 Satellite Insights":
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
     st.header("🤖 Smart Advisory")
-
+    
+    country = st.text_input("Country")
+ 
     crop = st.text_input("Crop")
     soil = st.selectbox("Soil", ["Sandy", "Clay", "Loamy"])
     weather = st.selectbox("Weather", ["Hot", "Cold", "Rainy"])
