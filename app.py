@@ -42,6 +42,7 @@ menu = st.sidebar.radio("Menu", [
     "📈 Yield Predictor",
     "📅 Crop Calendar",
     "📈 Market & Profit",
+    "🌾 Crop Estimator",
 ])
 
 # ================= WEATHER =================
@@ -402,6 +403,87 @@ elif menu == "📈 Market & Profit":
         st.success(f"💰 Revenue: {currency[country]} {revenue}")
         st.warning(f"📉 Cost: {currency[country]} {cost}")
         st.info(f"🏆 Profit: {currency[country]} {profit}")
+
+
+#========Crop Estimator =======
+
+
+elif menu == "🌾 Crop Estimator":
+    st.subheader("🌾 Crop Cost & Yield Estimator")
+
+    # 1️⃣ Select Country
+    country = st.selectbox("Select Country", ["Pakistan", "USA", "India"])
+
+    # 2️⃣ Currency symbols for display
+    currency = {"Pakistan": "Rs", "USA": "$", "India": "₹"}
+
+    # 3️⃣ Crop data per country (cost per acre, yield per acre)
+    crop_data = {
+        "Pakistan": {
+            "Wheat": {"cost": 50000, "yield": 30},
+            "Rice": {"cost": 60000, "yield": 35},
+            "Maize": {"cost": 45000, "yield": 28},
+            "Sugarcane": {"cost": 80000, "yield": 60},
+            "Cotton": {"cost": 70000, "yield": 25},
+            "Barley": {"cost": 40000, "yield": 20},
+            "Tomato": {"cost": 35000, "yield": 15},
+            "Potato": {"cost": 30000, "yield": 18},
+            "Onion": {"cost": 25000, "yield": 12},
+            "Chili": {"cost": 20000, "yield": 10},
+            "Mustard": {"cost": 22000, "yield": 14},
+            "Soybean": {"cost": 28000, "yield": 16},
+            "Sugar beet": {"cost": 50000, "yield": 50},
+            "Carrot": {"cost": 18000, "yield": 10},
+            "Peas": {"cost": 24000, "yield": 12}
+        },
+        "USA": {
+            "Wheat": {"cost": 2000, "yield": 30},
+            "Rice": {"cost": 2500, "yield": 35},
+            "Maize": {"cost": 1800, "yield": 28},
+            "Sugarcane": {"cost": 4000, "yield": 60},
+            "Cotton": {"cost": 3500, "yield": 25},
+            "Barley": {"cost": 1500, "yield": 20},
+            "Tomato": {"cost": 1200, "yield": 15},
+            "Potato": {"cost": 1000, "yield": 18},
+            "Onion": {"cost": 900, "yield": 12},
+            "Chili": {"cost": 800, "yield": 10},
+            "Mustard": {"cost": 850, "yield": 14},
+            "Soybean": {"cost": 1100, "yield": 16},
+            "Sugar beet": {"cost": 2000, "yield": 50},
+            "Carrot": {"cost": 700, "yield": 10},
+            "Peas": {"cost": 900, "yield": 12}
+        },
+        "India": {
+            "Wheat": {"cost": 30000, "yield": 30},
+            "Rice": {"cost": 35000, "yield": 35},
+            "Maize": {"cost": 25000, "yield": 28},
+            "Sugarcane": {"cost": 50000, "yield": 60},
+            "Cotton": {"cost": 40000, "yield": 25},
+            "Barley": {"cost": 20000, "yield": 20},
+            "Tomato": {"cost": 18000, "yield": 15},
+            "Potato": {"cost": 15000, "yield": 18},
+            "Onion": {"cost": 12000, "yield": 12},
+            "Chili": {"cost": 10000, "yield": 10},
+            "Mustard": {"cost": 11000, "yield": 14},
+            "Soybean": {"cost": 15000, "yield": 16},
+            "Sugar beet": {"cost": 30000, "yield": 50},
+            "Carrot": {"cost": 9000, "yield": 10},
+            "Peas": {"cost": 12000, "yield": 12}
+        }
+    }
+
+    # 4️⃣ Select crop and area
+    crops = crop_data[country]
+    crop = st.selectbox("Select Crop", list(crops.keys()))
+    area = st.number_input("Enter land area (acres)", min_value=1)
+
+    # 5️⃣ Calculate total cost and yield
+    if st.button("Calculate"):
+        total_cost = crops[crop]["cost"] * area
+        total_yield = crops[crop]["yield"] * area
+
+        st.success(f"💰 Estimated Cost: {currency[country]} {total_cost}")
+        st.info(f"🌾 Expected Yield: {total_yield} maunds")
 # ================= YIELD =================
 elif menu == "📈 Yield Predictor":
     st.header("📈 Smart Yield Prediction")
