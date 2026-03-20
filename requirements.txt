@@ -3,3 +3,7 @@ requests
 pillow
 openai
 google-generativeai
+pandas
+folium
+streamlit-folium
+Pillow
