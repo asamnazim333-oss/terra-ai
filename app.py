@@ -40,6 +40,7 @@ menu = st.sidebar.radio("Menu", [
     "🦠 Disease Detection",
     "💬 AI Copilot",
     "📈 Yield Predictor",
+    "📅 Crop Calendar",
 ])
 
 # ================= WEATHER =================
@@ -254,7 +255,88 @@ elif menu == "💬 AI Copilot":
         st.session_state.chat.append({"role": "assistant", "content": reply})
         st.chat_message("assistant").write(reply)
 
+#==========Crop Calendar=============
+elif menu == "📅 Crop Calendar":
 
+    st.subheader("📅 Seasonal Crop Calendar (Pakistan)")
+
+    # Crop Data
+    crops_data = {
+        "Wheat": {
+            "sowing": ["November", "December"],
+            "harvest": ["April", "May"],
+            "use": "Staple food crop (flour, roti, bread)"
+        },
+        "Rice": {
+            "sowing": ["June", "July"],
+            "harvest": ["October", "November"],
+            "use": "Staple food crop (boiled rice, export)"
+        },
+        "Maize": {
+            "sowing": ["February", "March", "July", "August"],
+            "harvest": ["June", "November"],
+            "use": "Food, poultry feed, industrial use"
+        },
+        "Cotton": {
+            "sowing": ["April", "May"],
+            "harvest": ["September", "October"],
+            "use": "Textile industry"
+        },
+        "Sugarcane": {
+            "sowing": ["February", "March", "September", "October"],
+            "harvest": ["November", "December", "January", "February", "March"],
+            "use": "Sugar production"
+        },
+        "Mustard": {
+            "sowing": ["October", "November"],
+            "harvest": ["February", "March"],
+            "use": "Cooking oil"
+        },
+        "Gram (Chickpea)": {
+            "sowing": ["October", "November"],
+            "harvest": ["March", "April"],
+            "use": "Pulse / protein food"
+        },
+        "Sunflower": {
+            "sowing": ["January", "February", "June"],
+            "harvest": ["May", "June", "October"],
+            "use": "Cooking oil"
+        }
+    }
+
+    # User selects month
+    selected_month = st.selectbox(
+        "Select Month",
+        ["January","February","March","April","May","June",
+         "July","August","September","October","November","December"]
+    )
+
+    st.info(f"📆 Selected Month: {selected_month}")
+
+    sowing_crops = []
+    harvest_crops = []
+
+    for crop, details in crops_data.items():
+        if selected_month in details["sowing"]:
+            sowing_crops.append((crop, details["use"]))
+        if selected_month in details["harvest"]:
+            harvest_crops.append((crop, details["use"]))
+
+    st.markdown("### 🌱 Crops to Sow")
+
+    if sowing_crops:
+        for crop, use in sowing_crops:
+            st.success(f"🌾 {crop} — Use: {use}")
+    else:
+        st.write("No major sowing crop this month.")
+
+    st.markdown("### 🌾 Crops to Harvest")
+
+    if harvest_crops:
+        for crop, use in harvest_crops:
+            st.warning(f"🌾 {crop} — Use: {use}")
+    else:
+        st.write("No major harvesting crop this month.")
 # ================= YIELD =================
 elif menu == "📈 Yield Predictor":
     st.header("📈 Smart Yield Prediction")
