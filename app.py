@@ -145,7 +145,10 @@ elif menu == "🤖 AI Advisory":
 elif menu == "🦠 Disease Detection":
     st.subheader("🦠 Crop Disease Detection")
     st.write("Upload or capture a leaf image")
+   import google.generativeai as genai
+import pkg_resources
 
+st.write(pkg_resources.get_distribution("google-generativeai").version)
     with st.form("disease_form"):
         cam = st.camera_input("Camera")
         file = st.file_uploader("Upload", type=["jpg", "png", "jpeg"])
