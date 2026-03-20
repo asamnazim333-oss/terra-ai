@@ -72,24 +72,33 @@ if menu == "🌦 Weather Intelligence":
 elif menu == "🛰 Satellite Insights":
     st.header("🛰 Satellite Weather Insights (NASA)")
 
-    lat = st.number_input("Latitude", value=30.0)
-    lon = st.number_input("Longitude", value=70.0)
+    city_name = st.text_input("Enter City Name")
 
     if st.button("Get Data"):
-        with st.spinner("Fetching NASA data..."):
-            url = f"https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
-            res = requests.get(url).json()
+        with st.spinner("Fetching coordinates..."):
+            # Use OpenStreetMap to get lat/lon
+            geo_url = f"https://nominatim.openstreetmap.org/search?city={city_name}&format=json"
+            geo_res = requests.get(geo_url).json()
 
-            try:
-                data = res["properties"]["parameter"]
+            if geo_res:
+                lat = geo_res[0]["lat"]
+                lon = geo_res[0]["lon"]
 
-                st.success("NASA Data Loaded")
+                st.success(f"Coordinates: {lat}, {lon}")
 
-                st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
-                st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
+                # Fetch NASA POWER data
+                with st.spinner("Fetching NASA data..."):
+                    nasa_url = f"https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
+                    nasa_res = requests.get(nasa_url).json()
 
-            except:
-                st.error("Error fetching NASA data")
+                    try:
+                        data = nasa_res["properties"]["parameter"]
+                        st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
+                        st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
+                    except:
+                        st.error("Error fetching NASA data")
+            else:
+                st.error("City not found")
 
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
