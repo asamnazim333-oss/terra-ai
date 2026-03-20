@@ -533,10 +533,43 @@ elif menu == "🧪 Fertilizer AI":
 elif menu == "📈 Yield Predictor":
     st.header("📈 Smart Yield Prediction")
 
-    area = st.number_input("Land (acres)", 1)
-    rainfall = st.slider("Rainfall", 0, 500, 100)
-    temp = st.slider("Temperature", 0, 50, 25)
+    # 1️⃣ Select country
+    country = st.selectbox("Select Country", ["Pakistan", "USA", "India"])
 
+    # 2️⃣ Crop selection with base yield per acre
+    crop_base_yield = {
+        "Wheat": 30,
+        "Rice": 35,
+        "Maize": 28,
+        "Sugarcane": 60,
+        "Cotton": 25,
+        "Barley": 20,
+        "Tomato": 15,
+        "Potato": 18,
+        "Onion": 12,
+        "Chili": 10,
+        "Mustard": 14,
+        "Soybean": 16,
+        "Sugar beet": 50,
+        "Carrot": 10,
+        "Peas": 12
+    }
+
+    crop = st.selectbox("Select Crop", list(crop_base_yield.keys()))
+    area = st.number_input("Land Area (acres)", min_value=1)
+    rainfall = st.slider("Rainfall (mm)", 0, 500, 100)
+    temp = st.slider("Temperature (°C)", 0, 50, 25)
+    soil_quality = st.slider("Soil Quality (1-10)", 1, 10, 5)
+
+    # 3️⃣ Yield Prediction formula
     if st.button("Predict"):
-        yield_est = (area * 30) + (rainfall * 0.2) - (temp * 0.7)
-        st.success(f"Estimated Yield: {round(yield_est,2)}")
+        base_yield = crop_base_yield[crop]
+        # Simple predictive formula (can adjust with AI later)
+        yield_est = (base_yield * area) + (rainfall * 0.25) - (temp * 0.5) + (soil_quality * 2)
+
+        # Adjust units based on country
+        unit = "maunds" if country in ["Pakistan", "India"] else "tons"
+        if country in ["USA"]:
+            yield_est = yield_est * 0.025  # simple conversion to tons (example)
+
+        st.success(f"🌾 Estimated Yield for {crop}: {round(yield_est,2)} {unit}")
