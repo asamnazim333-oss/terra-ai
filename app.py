@@ -229,31 +229,35 @@ elif menu == "🦠 Disease Detection":
                         
 
 # ================= CHATBOT =================
-elif menu == "💬 AI Copilot":
-    st.header("💬 AI Farm Copilot")
+elif menu == "💬 Chatbot":
 
-    if "chat" not in st.session_state:
-        st.session_state.chat = []
+    st.subheader("💬 Farming Assistant Chatbot")
 
-    for msg in st.session_state.chat:
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    user_input = st.chat_input("Ask farming question...")
-
-    if user_input:
-        st.session_state.chat.append({"role": "user", "content": user_input})
+    if user_input := st.chat_input("Ask farming question..."):
+        st.session_state.messages.append({"role": "user", "content": user_input})
         st.chat_message("user").write(user_input)
 
-        response = groq_client.responses.create(
-            model="openai/gpt-oss-20b",
-            input=user_input
-        )
+        if not is_farming_question(user_input):
+            reply = "🌾 I can only help with farming and agriculture-related questions."
+        else:
+            response = client.responses.create(
+                model="openai/gpt-oss-20b",
+                input=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_input}
+                ],
+                max_output_tokens=1000
+            )
+            reply = response.output_text
 
-        reply = response.output_text
-
-        st.session_state.chat.append({"role": "assistant", "content": reply})
+        st.session_state.messages.append({"role": "assistant", "content": reply})
         st.chat_message("assistant").write(reply)
-
 # ================= YIELD =================
 elif menu == "📈 Yield Predictor":
     st.header("📈 Smart Yield Prediction")
