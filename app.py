@@ -7,6 +7,7 @@ import urllib.parse
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
+from datetime import datetime, timedelta
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
@@ -72,46 +73,52 @@ if menu == "🌦 Weather Intelligence":
             else:
                 st.error("City not found")
 
-# ================= SATELLITE =================
-
-
-
+# ================= SATELLITE===========
+   
 
 elif menu == "🛰 Satellite Insights":
     st.header("🛰 Satellite Weather & Crop Insights")
 
-    geo_res = None
-    city_name = st.text_input("Enter City Name")
+    # Initialize session_state variables
+    if "geo_res" not in st.session_state:
+        st.session_state.geo_res = None
+    if "map_data" not in st.session_state:
+        st.session_state.map_data = None
+    if "weather_df" not in st.session_state:
+        st.session_state.weather_df = None
+
+    city_name = st.text_input("Enter City Name", key="city_input")
 
     if st.button("Get Data"):
         with st.spinner("Fetching coordinates..."):
-            # Encode city name
             city_encoded = urllib.parse.quote(city_name)
             geo_url = f"https://nominatim.openstreetmap.org/search?city={city_encoded}&format=json"
             headers = {"User-Agent": "terra-ai-hackathon-app"}
 
             try:
                 res = requests.get(geo_url, headers=headers, timeout=10)
-                geo_res = res.json()
+                st.session_state.geo_res = res.json()
             except Exception as e:
                 st.error(f"Error fetching location: {e}")
-                geo_res = None
+                st.session_state.geo_res = None
 
-        if geo_res and len(geo_res) > 0:
-            lat = round(float(geo_res[0]["lat"]), 3)
-            lon = round(float(geo_res[0]["lon"]), 3)
+        if st.session_state.geo_res and len(st.session_state.geo_res) > 0:
+            lat = round(float(st.session_state.geo_res[0]["lat"]), 3)
+            lon = round(float(st.session_state.geo_res[0]["lon"]), 3)
             st.success(f"Coordinates: {lat}, {lon}")
 
-            # Interactive map
-            m = folium.Map(location=[lat, lon], zoom_start=10)
-            folium.Marker([lat, lon], popup=city_name).add_to(m)
-            st_folium(m, width=700, height=400)
+            # Create Folium Map only once and store in session_state
+            if st.session_state.map_data is None:
+                m = folium.Map(location=[lat, lon], zoom_start=10)
+                folium.Marker([lat, lon], popup=city_name).add_to(m)
+                st.session_state.map_data = m
 
-            # NASA POWER API
-            with st.spinner("Fetching NASA POWER data..."):
+            # Display the map
+            st_folium(st.session_state.map_data, width=700, height=400)
+
+            # NASA POWER API for last 7 days
+            with st.spinner("Fetching NASA data..."):
                 try:
-                    # Daily data for last 7 days
-                    from datetime import datetime, timedelta
                     end_date = datetime.utcnow().date()
                     start_date = end_date - timedelta(days=6)
                     start_str = start_date.strftime("%Y%m%d")
@@ -122,12 +129,10 @@ elif menu == "🛰 Satellite Insights":
                         f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}"
                         f"&start={start_str}&end={end_str}&format=JSON"
                     )
-
                     nasa_res = requests.get(nasa_url, timeout=10).json()
 
                     if "properties" in nasa_res and "parameter" in nasa_res["properties"]:
                         data = nasa_res["properties"]["parameter"]
-                        # Convert to DataFrame for chart
                         df = pd.DataFrame({
                             "date": list(data["T2M"].keys()),
                             "temperature": list(data["T2M"].values()),
@@ -136,13 +141,13 @@ elif menu == "🛰 Satellite Insights":
                         df["date"] = pd.to_datetime(df["date"])
                         st.subheader("📊 Last 7 Days Weather")
                         st.line_chart(df.set_index("date")[["temperature", "rainfall"]])
+                        st.session_state.weather_df = df
                     else:
                         st.warning("NASA data not available for this location. Try a nearby city.")
                 except Exception as e:
                     st.error(f"Error fetching NASA data: {e}")
         else:
-            st.error("City not found or invalid response from location service.")
-            
+            st.error("City not found or invalid response from location service.")         
 
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
