@@ -76,47 +76,83 @@ if menu == "🌦 Weather Intelligence":
                 st.error("City not found")
 
 # ================= SATELLITE =================
+# ================= SATELLITE INSIGHTS =================
 elif menu == "🛰 Satellite Insights":
     st.header("🛰 Satellite Weather & Crop Insights (Global)")
 
-    city_name = st.text_input("Enter City Name")
+    # Initialize session_state variables
+    if "satellite_clicked" not in st.session_state:
+        st.session_state.satellite_clicked = False
+    if "geo_res" not in st.session_state:
+        st.session_state.geo_res = None
+    if "map_data" not in st.session_state:
+        st.session_state.map_data = None
+    if "weather_df" not in st.session_state:
+        st.session_state.weather_df = None
+    if "city_input" not in st.session_state:
+        st.session_state.city_input = ""
+
+    # Input field
+    city_name = st.text_input("Enter City Name", st.session_state.city_input)
+    st.session_state.city_input = city_name  # Preserve input across reruns
 
     if st.button("Get Data"):
-        with st.spinner("Fetching data..."):
+        st.session_state.satellite_clicked = True
+
+        with st.spinner("Fetching coordinates..."):
             try:
-                geo_url = f"https://nominatim.openstreetmap.org/search?city={urllib.parse.quote(city_name)}&format=json"
-                headers = {"User-Agent": "terra-ai"}
-                geo_res = requests.get(geo_url, headers=headers).json()
+                city_encoded = urllib.parse.quote(city_name)
+                geo_url = f"https://nominatim.openstreetmap.org/search?city={city_encoded}&format=json"
+                headers = {"User-Agent": "terra-ai-hackathon-app"}
+                res = requests.get(geo_url, headers=headers, timeout=10)
+                st.session_state.geo_res = res.json()
+            except Exception as e:
+                st.error(f"Error fetching location: {e}")
+                st.session_state.geo_res = None
 
-                if geo_res:
-                    lat = float(geo_res[0]["lat"])
-                    lon = float(geo_res[0]["lon"])
+    # Only display map and weather if button clicked or previously clicked
+    if st.session_state.satellite_clicked:
+        if st.session_state.geo_res and len(st.session_state.geo_res) > 0:
+            lat = round(float(st.session_state.geo_res[0]["lat"]), 3)
+            lon = round(float(st.session_state.geo_res[0]["lon"]), 3)
+            st.success(f"Coordinates: {lat}, {lon}")
 
-                    st.success(f"📍 Coordinates: {lat}, {lon}")
+            # Display map
+            if st.session_state.map_data is None:
+                m = folium.Map(location=[lat, lon], zoom_start=10)
+                folium.Marker([lat, lon], popup=city_name).add_to(m)
+                st.session_state.map_data = m
 
-                    m = folium.Map(location=[lat, lon], zoom_start=10)
-                    folium.Marker([lat, lon]).add_to(m)
-                    st_folium(m, width=700, height=400)
+            st_folium(st.session_state.map_data, width=700, height=400)
 
-                    weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto"
-                    weather_res = requests.get(weather_url).json()
+            # Fetch 7-day weather
+            with st.spinner("Fetching 7-day weather forecast..."):
+                try:
+                    open_meteo_url = (
+                        f"https://api.open-meteo.com/v1/forecast?"
+                        f"latitude={lat}&longitude={lon}"
+                        f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
+                        f"&timezone=auto"
+                    )
+                    weather_res = requests.get(open_meteo_url, timeout=10).json()
 
                     if "daily" in weather_res:
                         df = pd.DataFrame({
                             "date": weather_res["daily"]["time"],
                             "temp_max": weather_res["daily"]["temperature_2m_max"],
                             "temp_min": weather_res["daily"]["temperature_2m_min"],
-                            "rain": weather_res["daily"]["precipitation_sum"]
+                            "rainfall": weather_res["daily"]["precipitation_sum"]
                         })
                         df["date"] = pd.to_datetime(df["date"])
-                        st.line_chart(df.set_index("date"))
+                        st.subheader("📊 7-Day Weather Forecast")
+                        st.line_chart(df.set_index("date")[["temp_max", "temp_min", "rainfall"]])
+                        st.session_state.weather_df = df
                     else:
-                        st.warning("Weather data not available")
-                else:
-                    st.error("City not found")
-
-            except Exception as e:
-                st.error(f"Error: {e}")
+                        st.warning("Weather data not available for this location.")
+                except Exception as e:
+                    st.error(f"Error fetching weather data: {e}")
+        else:
+            st.error("City not found or invalid response from location service.")
 
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
