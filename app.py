@@ -29,9 +29,6 @@ st.title("🌍 Terra-AI")
 st.caption("Global AI Copilot for Smart Farming")
 
 
-# ================= GLOBAL MODE =================
-country = st.selectbox("🌎 Select Country", ["USA", "Pakistan", "India"])
-
 # ================= MENU =================
 menu = st.sidebar.radio("Menu", [
     "🌦 Weather Intelligence",
