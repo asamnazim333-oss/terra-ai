@@ -6,4 +6,3 @@ pandas
 folium
 streamlit-folium
 google-generativeai
-setuptoolsstreamlit
