@@ -186,55 +186,91 @@ elif menu == "🤖 AI Advisory":
 # ================= DISEASE =================
 elif menu == "🦠 Disease Detection":
     st.subheader("🦠 Crop Disease Detection")
-    st.write("Take a picture of crop or upload")
+    st.write("Take a picture of a leaf or upload an image")
 
-    # Form use karne se Axios error bypass ho jata hai
+    # Form to bypass Axios / upload issues
     with st.form("disease_form", clear_on_submit=True):
-        # Option 1: Mobile Camera (Best for farmers)
-        cam_image = st.camera_input("Take a photo of the leaf")
-        
-        # Option 2: File Upload (If camera not available)
-        file_image = st.file_uploader("Select File", type=["jpg", "jpeg", "png"])
-        
+        cam_image = st.camera_input("📷 Take a photo of the leaf")
+        file_image = st.file_uploader("📁 Or upload a leaf image", type=["jpg", "jpeg", "png"])
         submit_button = st.form_submit_button("Check Disease")
 
-    # Image processing logic
-    target_image = cam_image if cam_image is not None else file_image
+    # Determine which image to process
+    target_image = cam_image if cam_image else file_image
 
     if target_image is not None and submit_button:
         try:
-            # Step 1: Image ko open aur compress karein
             img = Image.open(target_image)
-            
-            # AI ke liye 1024px kafi hai, is se Axios crash nahi hota
-            img.thumbnail((1024, 1024))
-            
-            # st.image(img, caption="Processing Image...", width=300)
+            img.thumbnail((1024, 1024))  # Resize for processing
+            st.image(img, caption="Processing image...", width=300)
 
-            with st.spinner("Checking..."):
-                # prompt
-                prompt = """
-                    You are an expert plant pathologist for Pakistan's crops. 
-                    Analyze this image of a  plant. 
-                    1. Name the disease.
-                    2. Give a brief explanation of why it happened.
-                    3. Suggest organic (desi) and chemical remedies.
-                    4.Answer briefly in 200 words max.
-                    If the plant is healthy, congratulate the farmer.
-                    """
-                
-                # Gemini Client Call
-                response = gemini_client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[prompt, img]
-                )
-                
-                st.success("✅ Analysis Result:")
-                st.markdown(response.text)
+            with st.spinner("Analyzing..."):
+
+                # -----------------------------
+                # 1️⃣ Try Gemini if API key exists
+                # -----------------------------
+                gemini_key = os.environ.get("GEMINI_API_KEY")
+                if gemini_key:
+                    try:
+                        from google import genai
+                        import base64
+
+                        gemini_client = genai.Client(api_key=gemini_key)
+                        img_bytes = target_image.read()
+                        img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+
+                        prompt = """
+                        You are an expert plant pathologist.
+                        Analyze this plant leaf image.
+                        1. Name the disease.
+                        2. Give confidence percentage.
+                        3. Explain cause briefly.
+                        4. Suggest organic and chemical remedies.
+                        If healthy, say so.
+                        """
+
+                        response = gemini_client.models.generate_content(
+                            model="gemini-2.5-flash",
+                            contents=[prompt, img_base64]
+                        )
+
+                        st.success("✅ Analysis Result (Gemini):")
+                        st.markdown(response.text)
+
+                    except Exception as e:
+                        st.warning(f"Gemini AI failed: {e}")
+                        st.info("Falling back to Hugging Face model...")
+
+                # -----------------------------
+                # 2️⃣ Fallback to Hugging Face Plant Disease Model
+                # -----------------------------
+                else:
+                    try:
+                        from transformers import pipeline
+
+                        classifier = pipeline(
+                            "image-classification",
+                            model="nateraw/plant-disease-classifier"
+                        )
+
+                        results = classifier(img)
+                        # Example result: [{'label': 'Tomato___Late_blight', 'score': 0.95}]
+                        st.success("✅ Analysis Result (Hugging Face):")
+                        for res in results:
+                            disease_name = res["label"].replace("_", " ").replace("___", " ")
+                            confidence = round(res["score"] * 100, 2)
+                            st.markdown(f"**Disease:** {disease_name}  \n**Confidence:** {confidence}%")
+                            # Simple remedies suggestion
+                            if "healthy" not in disease_name.lower():
+                                st.markdown("**Remedies:** Use balanced NPK fertilizer, remove infected leaves, apply appropriate pesticide or organic compost as needed.")
+                            else:
+                                st.markdown("🌱 The plant looks healthy! Keep monitoring regularly.")
+
+                    except Exception as e:
+                        st.error(f"Hugging Face model failed: {e}")
 
         except Exception as e:
-            st.error(f"Error: {e}")
-            st.warning("Agar Axios 403 aaye, toh photo ka size kam karein ya camera input use karein.")
+            st.error(f"Image processing error: {e}")
+            st.warning("Try a different image or reduce file size.")
 
 # ================= CHATBOT =================
 elif menu == "💬 AI Copilot":
