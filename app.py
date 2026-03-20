@@ -76,10 +76,12 @@ if menu == "🌦 Weather Intelligence":
 # ================= SATELLITE===========
    
 
-elif menu == "🛰 Satellite Insights":
-    st.header("🛰 Satellite Weather & Crop Insights")
 
-    # Initialize session_state variables
+
+elif menu == "🛰 Satellite Insights":
+    st.header("🛰 Satellite Weather & Crop Insights (Global)")
+
+    # Initialize session_state
     if "geo_res" not in st.session_state:
         st.session_state.geo_res = None
     if "map_data" not in st.session_state:
@@ -103,51 +105,48 @@ elif menu == "🛰 Satellite Insights":
                 st.session_state.geo_res = None
 
         if st.session_state.geo_res and len(st.session_state.geo_res) > 0:
+            # Convert to float and round
             lat = round(float(st.session_state.geo_res[0]["lat"]), 3)
             lon = round(float(st.session_state.geo_res[0]["lon"]), 3)
             st.success(f"Coordinates: {lat}, {lon}")
 
-            # Create Folium Map only once and store in session_state
-            if st.session_state.map_data is None:
-                m = folium.Map(location=[lat, lon], zoom_start=10)
-                folium.Marker([lat, lon], popup=city_name).add_to(m)
-                st.session_state.map_data = m
+            # Folium Map
+            m = folium.Map(location=[lat, lon], zoom_start=10)
+            folium.Marker([lat, lon], popup=city_name).add_to(m)
+            st_folium(m, width=700, height=400)
 
-            # Display the map
-            st_folium(st.session_state.map_data, width=700, height=400)
-
-            # NASA POWER API for last 7 days
-            with st.spinner("Fetching NASA data..."):
+            # Fetch 7-day forecast from Open-Meteo
+            with st.spinner("Fetching 7-day weather forecast..."):
                 try:
-                    end_date = datetime.utcnow().date()
-                    start_date = end_date - timedelta(days=6)
-                    start_str = start_date.strftime("%Y%m%d")
-                    end_str = end_date.strftime("%Y%m%d")
-
-                    nasa_url = (
-                        f"https://power.larc.nasa.gov/api/temporal/daily/point?"
-                        f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}"
-                        f"&start={start_str}&end={end_str}&format=JSON"
+                    open_meteo_url = (
+                        f"https://api.open-meteo.com/v1/forecast?"
+                        f"latitude={lat}&longitude={lon}"
+                        f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
+                        f"&timezone=auto"
                     )
-                    nasa_res = requests.get(nasa_url, timeout=10).json()
+                    weather_res = requests.get(open_meteo_url, timeout=10).json()
 
-                    if "properties" in nasa_res and "parameter" in nasa_res["properties"]:
-                        data = nasa_res["properties"]["parameter"]
+                    # Convert to DataFrame
+                    if "daily" in weather_res:
                         df = pd.DataFrame({
-                            "date": list(data["T2M"].keys()),
-                            "temperature": list(data["T2M"].values()),
-                            "rainfall": list(data["PRECTOT"].values())
+                            "date": weather_res["daily"]["time"],
+                            "temp_max": weather_res["daily"]["temperature_2m_max"],
+                            "temp_min": weather_res["daily"]["temperature_2m_min"],
+                            "rainfall": weather_res["daily"]["precipitation_sum"]
                         })
                         df["date"] = pd.to_datetime(df["date"])
-                        st.subheader("📊 Last 7 Days Weather")
-                        st.line_chart(df.set_index("date")[["temperature", "rainfall"]])
+                        st.subheader("📊 7-Day Weather Forecast")
+                        st.line_chart(df.set_index("date")[["temp_max", "temp_min", "rainfall"]])
                         st.session_state.weather_df = df
                     else:
-                        st.warning("NASA data not available for this location. Try a nearby city.")
+                        st.warning("Weather data not available for this location.")
                 except Exception as e:
-                    st.error(f"Error fetching NASA data: {e}")
+                    st.error(f"Error fetching weather data: {e}")
+
+            # Optional: NDVI overlay using Sentinel Hub (open-source)
+            st.info("🌱 NDVI overlay can be added here using Sentinel Hub / Open Data. Requires API key.")
         else:
-            st.error("City not found or invalid response from location service.")         
+            st.error("City not found or invalid response from location service.")   
 
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
