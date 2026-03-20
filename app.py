@@ -9,7 +9,6 @@ import folium
 from streamlit_folium import st_folium
 from datetime import datetime, timedelta
 import os
-import google.generativeai as genai
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
@@ -22,8 +21,10 @@ groq_client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-
-gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+# ✅ FIXED Gemini setup
+GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", None)
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # ================= HEADER =================
 st.title("🌍 Terra-AI")
@@ -42,7 +43,7 @@ menu = st.sidebar.radio("Menu", [
     "📈 Yield Predictor",
 ])
 
-# ================= WEATHER (7 DAY) =================
+# ================= WEATHER =================
 if menu == "🌦 Weather Intelligence":
     st.header("🌦 7-Day Weather Forecast")
 
@@ -64,7 +65,6 @@ if menu == "🌦 Weather Intelligence":
 
                     st.write(day["weather"][0]["description"])
 
-                    # Alerts
                     if day['main']['temp'] > 35:
                         st.warning("🔥 Heat Stress Alert")
                     if day['main']['temp'] < 5:
@@ -76,85 +76,49 @@ if menu == "🌦 Weather Intelligence":
             else:
                 st.error("City not found")
 
-# ================= SATELLITE===========
-   
-
+# ================= SATELLITE =================
 elif menu == "🛰 Satellite Insights":
-    st.header("🛰 Satellite Weather & Crop Insights (Global)")
+    st.header("🛰 Satellite Weather & Crop Insights")
 
-    # Initialize session_state
-    if "satellite_clicked" not in st.session_state:
-        st.session_state.satellite_clicked = False
-    if "geo_res" not in st.session_state:
-        st.session_state.geo_res = None
-    if "map_data" not in st.session_state:
-        st.session_state.map_data = None
-    if "weather_df" not in st.session_state:
-        st.session_state.weather_df = None
-
-    city_name = st.text_input("Enter City Name", key="city_input")
+    city_name = st.text_input("Enter City Name")
 
     if st.button("Get Data"):
-        st.session_state.satellite_clicked = True
-
-        with st.spinner("Fetching coordinates..."):
-            city_encoded = urllib.parse.quote(city_name)
-            geo_url = f"https://nominatim.openstreetmap.org/search?city={city_encoded}&format=json"
-            headers = {"User-Agent": "terra-ai-hackathon-app"}
-
+        with st.spinner("Fetching data..."):
             try:
-                res = requests.get(geo_url, headers=headers, timeout=10)
-                st.session_state.geo_res = res.json()
-            except Exception as e:
-                st.error(f"Error fetching location: {e}")
-                st.session_state.geo_res = None
+                geo_url = f"https://nominatim.openstreetmap.org/search?city={urllib.parse.quote(city_name)}&format=json"
+                headers = {"User-Agent": "terra-ai"}
+                geo_res = requests.get(geo_url, headers=headers).json()
 
-    # Only run if button clicked
-    if st.session_state.satellite_clicked:
+                if geo_res:
+                    lat = float(geo_res[0]["lat"])
+                    lon = float(geo_res[0]["lon"])
 
-        if st.session_state.geo_res and len(st.session_state.geo_res) > 0:
-            lat = round(float(st.session_state.geo_res[0]["lat"]), 3)
-            lon = round(float(st.session_state.geo_res[0]["lon"]), 3)
-            st.success(f"Coordinates: {lat}, {lon}")
+                    st.success(f"📍 Coordinates: {lat}, {lon}")
 
-            # Create map only once
-            if st.session_state.map_data is None:
-                m = folium.Map(location=[lat, lon], zoom_start=10)
-                folium.Marker([lat, lon], popup=city_name).add_to(m)
-                st.session_state.map_data = m
+                    m = folium.Map(location=[lat, lon], zoom_start=10)
+                    folium.Marker([lat, lon]).add_to(m)
+                    st_folium(m, width=700, height=400)
 
-            # Display map
-            st_folium(st.session_state.map_data, width=700, height=400)
-
-            # Open-Meteo 7-day forecast
-            with st.spinner("Fetching 7-day weather forecast..."):
-                try:
-                    open_meteo_url = (
-                        f"https://api.open-meteo.com/v1/forecast?"
-                        f"latitude={lat}&longitude={lon}"
-                        f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
-                        f"&timezone=auto"
-                    )
-                    weather_res = requests.get(open_meteo_url, timeout=10).json()
+                    weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto"
+                    weather_res = requests.get(weather_url).json()
 
                     if "daily" in weather_res:
                         df = pd.DataFrame({
                             "date": weather_res["daily"]["time"],
                             "temp_max": weather_res["daily"]["temperature_2m_max"],
                             "temp_min": weather_res["daily"]["temperature_2m_min"],
-                            "rainfall": weather_res["daily"]["precipitation_sum"]
+                            "rain": weather_res["daily"]["precipitation_sum"]
                         })
                         df["date"] = pd.to_datetime(df["date"])
-                        st.subheader("📊 7-Day Weather Forecast")
-                        st.line_chart(df.set_index("date")[["temp_max", "temp_min", "rainfall"]])
-                        st.session_state.weather_df = df
+                        st.line_chart(df.set_index("date"))
                     else:
-                        st.warning("Weather data not available for this location.")
-                except Exception as e:
-                    st.error(f"Error fetching weather data: {e}")
+                        st.warning("Weather data not available")
 
-        else:
-            st.error("City not found or invalid response from location service.")
+                else:
+                    st.error("City not found")
+
+            except Exception as e:
+                st.error(f"Error: {e}")
 
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
@@ -170,111 +134,77 @@ elif menu == "🤖 AI Advisory":
         Crop: {crop}
         Soil: {soil}
         Weather: {weather}
-
-        Give advanced farming advice including:
-        - Fertilizer
-        - Irrigation
-        - Risk alerts
+        Give farming advice.
         """
 
-        with st.spinner("AI thinking..."):
-            response = groq_client.responses.create(
-                model="openai/gpt-oss-20b",
-                input=prompt,
-                max_output_tokens=600
-            )
+        response = groq_client.responses.create(
+            model="openai/gpt-oss-20b",
+            input=prompt
+        )
 
-            st.success(response.output_text)
+        st.success(response.output_text)
 
-# ================= DISEASE =================
+# ================= DISEASE DETECTION (FIXED) =================
 elif menu == "🦠 Disease Detection":
     st.subheader("🦠 Crop Disease Detection")
-    st.write("Take a picture of crop or upload")
+    st.write("Upload or capture a leaf image")
 
-    # Form use karne se Axios error bypass ho jata hai
-    with st.form("disease_form", clear_on_submit=True):
-        # Option 1: Mobile Camera (Best for farmers)
-        cam_image = st.camera_input("Take a photo of the leaf")
-        
-        # Option 2: File Upload (If camera not available)
-        file_image = st.file_uploader("Select File", type=["jpg", "jpeg", "png"])
-        
-        submit_button = st.form_submit_button("Check Disease")
+    with st.form("disease_form"):
+        cam = st.camera_input("Camera")
+        file = st.file_uploader("Upload", type=["jpg","png","jpeg"])
+        submit = st.form_submit_button("Analyze")
 
-    # Image processing logic
-    target_image = cam_image if cam_image is not None else file_image
+    img_file = cam if cam else file
 
-    if target_image is not None and submit_button:
+    if img_file and submit:
         try:
-            # Step 1: Image ko open aur compress karein
-            img = Image.open(target_image)
-            
-            # AI ke liye 1024px kafi hai, is se Axios crash nahi hota
-            img.thumbnail((1024, 1024))
-            
-            # st.image(img, caption="Processing Image...", width=300)
+            img = Image.open(img_file)
+            img.thumbnail((1024,1024))
+            st.image(img, width=300)
 
-            with st.spinner("Checking..."):
-                # prompt
-                prompt = """
-                    You are an expert plant pathologist for Pakistan's crops. 
-                    Analyze this image of a  plant. 
-                    1. Name the disease.
-                    2. Give a brief explanation of why it happened.
-                    3. Suggest organic (desi) and chemical remedies.
-                    4.Answer briefly in 200 words max.
-                    If the plant is healthy, congratulate the farmer.
+            if not GEMINI_API_KEY:
+                st.error("Gemini API key missing")
+            else:
+                with st.spinner("Analyzing..."):
+
+                    model = genai.GenerativeModel("gemini-1.5-flash")
+
+                    prompt = """
+                    Identify plant disease, give confidence %, cause and treatment.
                     """
-                
-                # Gemini Client Call
-                response = gemini_client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[prompt, img]
-                )
-                
-                st.success("✅ Analysis Result:")
-                st.markdown(response.text)
+
+                    response = model.generate_content([prompt, img])
+
+                    st.success("✅ Result")
+                    st.markdown(response.text)
 
         except Exception as e:
             st.error(f"Error: {e}")
-            st.warning("Agar Axios 403 aaye, toh photo ka size kam karein ya camera input use karein.")
+
 # ================= CHATBOT =================
 elif menu == "💬 AI Copilot":
-    st.header("💬 AI Farm Copilot")
+    st.header("💬 AI Copilot")
 
-    if "chat" not in st.session_state:
-        st.session_state.chat = []
+    user = st.chat_input("Ask...")
 
-    for msg in st.session_state.chat:
-        st.chat_message(msg["role"]).write(msg["content"])
+    if user:
+        st.chat_message("user").write(user)
 
-    user_input = st.chat_input("Ask farming question...")
+        res = groq_client.responses.create(
+            model="openai/gpt-oss-20b",
+            input=user
+        )
 
-    if user_input:
-        st.session_state.chat.append({"role": "user", "content": user_input})
-        st.chat_message("user").write(user_input)
-
-        with st.spinner("Thinking..."):
-            response = groq_client.responses.create(
-                model="openai/gpt-oss-20b",
-                input=user_input,
-                max_output_tokens=500
-            )
-
-            reply = response.output_text
-
-        st.session_state.chat.append({"role": "assistant", "content": reply})
-        st.chat_message("assistant").write(reply)
+        st.chat_message("assistant").write(res.output_text)
 
 # ================= YIELD =================
 elif menu == "📈 Yield Predictor":
-    st.header("📈 Smart Yield Prediction")
+    st.header("📈 Yield Prediction")
 
-    area = st.number_input("Land (acres)", 1)
-    rainfall = st.slider("Rainfall", 0, 500, 100)
-    temp = st.slider("Temperature", 0, 50, 25)
+    area = st.number_input("Acres",1)
+    rain = st.slider("Rainfall",0,500,100)
+    temp = st.slider("Temp",0,50,25)
 
     if st.button("Predict"):
-        yield_est = (area * 30) + (rainfall * 0.2) - (temp * 0.7)
-
-        st.success(f"Estimated Yield: {round(yield_est,2)}")
+        y = (area*30)+(rain*0.2)-(temp*0.7)
+        st.success(f"Yield: {round(y,2)}")
