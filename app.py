@@ -70,10 +70,11 @@ if menu == "🌦 Weather Intelligence":
                 st.error("City not found")
 
 # ================= SATELLITE =================
-  # at top of app.py
 
 elif menu == "🛰 Satellite Insights":
     st.header("🛰 Satellite Weather Insights (NASA)")
+
+    geo_res = None  # initialize to avoid NameError
 
     city_name = st.text_input("Enter City Name")
 
@@ -82,46 +83,44 @@ elif menu == "🛰 Satellite Insights":
 
             # Encode city name for URL
             city_encoded = urllib.parse.quote(city_name)
-
             geo_url = f"https://nominatim.openstreetmap.org/search?city={city_encoded}&format=json"
 
-            headers = {
-                "User-Agent": "terra-ai-hackathon-app"
-            }
+            headers = {"User-Agent": "terra-ai-hackathon-app"}
 
             try:
                 res = requests.get(geo_url, headers=headers, timeout=10)
                 geo_res = res.json()
             except requests.exceptions.JSONDecodeError:
                 st.error("Error decoding location data. Nominatim may have rejected the request.")
-                geo_res = None
             except requests.exceptions.RequestException as e:
                 st.error(f"Error fetching location: {e}")
-                geo_res = None
-if geo_res and len(geo_res) > 0:
-    lat = geo_res[0]["lat"]
-    lon = geo_res[0]["lon"]
-    st.success(f"Coordinates: {lat}, {lon}")
 
-    # Fetch NASA POWER data
-    with st.spinner("Fetching NASA data..."):
-        try:
-            # Use DAILY or CLIMATE, format=JSON, parameters T2M, PRECTOT
-            nasa_url = (
-                f"https://power.larc.nasa.gov/api/temporal/daily/point?"
-                f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
-            )
-            nasa_res = requests.get(nasa_url, timeout=10).json()
+            if geo_res and len(geo_res) > 0:
+                lat = geo_res[0]["lat"]
+                lon = geo_res[0]["lon"]
+                st.success(f"Coordinates: {lat}, {lon}")
 
-            # Check if 'properties' exists
-            if "properties" in nasa_res and "parameter" in nasa_res["properties"]:
-                data = nasa_res["properties"]["parameter"]
-                st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
-                st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
+                # Fetch NASA POWER data
+                with st.spinner("Fetching NASA data..."):
+                    try:
+                        nasa_url = (
+                            f"https://power.larc.nasa.gov/api/temporal/daily/point?"
+                            f"parameters=T2M,PRECTOT&community=AG&longitude={lon}&latitude={lat}&format=JSON"
+                        )
+                        nasa_res = requests.get(nasa_url, timeout=10).json()
+
+                        if "properties" in nasa_res and "parameter" in nasa_res["properties"]:
+                            data = nasa_res["properties"]["parameter"]
+                            st.write("🌡 Temperature Sample:", list(data["T2M"].values())[:5])
+                            st.write("🌧 Rainfall Sample:", list(data["PRECTOT"].values())[:5])
+                        else:
+                            st.error("NASA data not available for this location.")
+
+                    except Exception as e:
+                        st.error(f"Error fetching NASA data: {e}")
+
             else:
-                st.error("NASA data not available for this location.")
-        except Exception as e:
-            st.error(f"Error fetching NASA data: {e}")
+                st.error("City not found or invalid response from location service.")
             
 
 # ================= AI ADVISORY =================
