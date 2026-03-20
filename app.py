@@ -145,13 +145,15 @@ elif menu == "🤖 AI Advisory":
         st.success(response.output_text)
 
 # ================= DISEASE DETECTION (FIXED) =================
+
+            # ================= DISEASE DETECTION (FIXED) =================
 elif menu == "🦠 Disease Detection":
     st.subheader("🦠 Crop Disease Detection")
     st.write("Upload or capture a leaf image")
 
     with st.form("disease_form"):
         cam = st.camera_input("Camera")
-        file = st.file_uploader("Upload", type=["jpg","png","jpeg"])
+        file = st.file_uploader("Upload", type=["jpg", "png", "jpeg"])
         submit = st.form_submit_button("Analyze")
 
     img_file = cam if cam else file
@@ -159,28 +161,26 @@ elif menu == "🦠 Disease Detection":
     if img_file and submit:
         try:
             img = Image.open(img_file)
-            img.thumbnail((1024,1024))
+            img.thumbnail((1024, 1024))
             st.image(img, width=300)
 
             if not GEMINI_API_KEY:
                 st.error("Gemini API key missing")
             else:
                 with st.spinner("Analyzing..."):
-                   try:
-                      model = genai.GenerativeModel("gemini-pro-vision")
-                      response = model.generate_content([prompt, img])
-                      st.markdown(response.text)
+                    
+                    prompt = """Identify plant disease, give confidence %, cause and treatment."""
 
-                   except:
-                      st.warning("Gemini failed → using backup AI")
-                 # fallback model here
+                    try:
+                        model = genai.GenerativeModel("gemini-pro-vision")
+                        response = model.generate_content([prompt, img])
 
-                    prompt = """ Identify plant disease, give confidence %, cause and treatment. """
+                        st.success("✅ Gemini Result")
+                        st.markdown(response.text)
 
-                    response = model.generate_content([prompt, img])
-
-                    st.success("✅ Result")
-                    st.markdown(response.text)
+                    except Exception as e:
+                        st.warning("⚠ Gemini failed")
+                        st.error(e)
 
         except Exception as e:
             st.error(f"Error: {e}")
