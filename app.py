@@ -167,7 +167,14 @@ elif menu == "🦠 Disease Detection":
             else:
                 with st.spinner("Analyzing..."):
 
-                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    try:
+    model = genai.GenerativeModel("gemini-pro-vision")
+    response = model.generate_content([prompt, img])
+    st.markdown(response.text)
+
+except:
+    st.warning("Gemini failed → using backup AI")
+    # fallback model here
 
                     prompt = """
                     Identify plant disease, give confidence %, cause and treatment.
