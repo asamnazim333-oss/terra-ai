@@ -8,8 +8,15 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import os
+import importlib.metadata as importlib_metadata
+import streamlit as st
 import google.generativeai as genai
-import pkg_resources
+
+st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
+
+# Get version without pkg_resources
+st.write("Gemini lib version:", importlib_metadata.version("google-generativeai"))
+
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
