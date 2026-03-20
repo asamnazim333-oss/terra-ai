@@ -10,6 +10,17 @@ from streamlit_folium import st_folium
 import os
 import importlib.metadata as importlib_metadata
 import streamlit as st
+import google.generativeai as genai
+import streamlit as st
+import os
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
+
+st.subheader("Available Gemini Models")
+models = genai.list_models()
+for m in models:
+    st.write(m["name"], "→ Supported methods:", m["supported_methods"])
 
 st.write("Google GenerativeAI version:", importlib_metadata.version("google-generativeai"))
 
