@@ -10,6 +10,10 @@ from streamlit_folium import st_folium
 import os
 import importlib.metadata as importlib_metadata
 import streamlit as st
+
+
+st.write("Google GenerativeAI version:", importlib_metadata.version("google-generativeai"))
+
 import google.generativeai as genai
 import streamlit as st
 import os
@@ -19,12 +23,10 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 st.subheader("Available Gemini Models")
 models = genai.list_models()
+
 for m in models:
-    st.write(m["name"], "→ Supported methods:", m["supported_methods"])
-
-st.write("Google GenerativeAI version:", importlib_metadata.version("google-generativeai"))
-
-
+    # Safely display the model object
+    st.write(m)
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
 
