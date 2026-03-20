@@ -8,6 +8,7 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import os
+import google.generativeai as genai
 import pkg_resources
 
 # ================= CONFIG =================
