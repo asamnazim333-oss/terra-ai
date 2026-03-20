@@ -5,5 +5,5 @@ openai
 pandas
 folium
 streamlit-folium
-Pillow
 google-generativeai
+setuptoolsstreamlit
