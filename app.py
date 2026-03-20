@@ -11,11 +11,11 @@ from datetime import datetime, timedelta
 import os
 import google.generativeai as genai
 
-================= CONFIG =================
+#================= CONFIG =================
 
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
 
-================= KEYS =================
+#================= KEYS =================
 
 OPENWEATHER_API_KEY = st.secrets["OPENWEATHER_API_KEY"]
 
@@ -26,16 +26,16 @@ base_url="https://api.groq.com/openai/v1"
 
 gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-================= HEADER =================
+#================= HEADER =================
 
 st.title("🌍 Terra-AI")
 st.caption("Global AI Copilot for Smart Farming")
 
-================= GLOBAL MODE =================
+#================= GLOBAL MODE =================
 
 country = st.selectbox("🌎 Select Country", ["USA", "Pakistan", "India"])
 
-================= MENU =================
+#================= MENU =================
 
 menu = st.sidebar.radio("Menu", [
 "🌦 Weather Intelligence",
@@ -46,7 +46,7 @@ menu = st.sidebar.radio("Menu", [
 "📈 Yield Predictor",
 ])
 
-================= WEATHER (7 DAY) =================
+#================= WEATHER (7 DAY) =================
 
 if menu == "🌦 Weather Intelligence":
 st.header("🌦 7-Day Weather Forecast")
@@ -81,7 +81,7 @@ if st.button("Get Forecast"):
         else:  
             st.error("City not found")
 
-================= SATELLITE===========
+#================= SATELLITE===========
 
 elif menu == "🛰 Satellite Insights":
 st.header("🛰 Satellite Weather & Crop Insights (Global)")
@@ -160,7 +160,7 @@ if st.session_state.satellite_clicked:
     else:  
         st.error("City not found or invalid response from location service.")
 
-================= AI ADVISORY =================
+#================= AI ADVISORY =================
 
 elif menu == "🤖 AI Advisory":
 st.header("🤖 Smart Advisory")
@@ -191,7 +191,7 @@ if st.button("Generate Advice"):
 
         st.success(response.output_text)
 
-================= DISEASE =================
+#================= DISEASE =================
 
 # ================= DISEASE DETECTION (FIXED) =================
 elif menu == "🦠 Disease Detection":
@@ -233,7 +233,7 @@ elif menu == "🦠 Disease Detection":
             st.error(f"Error: {e}")
         
 
-================= CHATBOT =================
+#================= CHATBOT =================
 
 elif menu == "💬 AI Copilot":
 st.header("💬 AI Farm Copilot")
@@ -262,7 +262,7 @@ if user_input:
     st.session_state.chat.append({"role": "assistant", "content": reply})  
     st.chat_message("assistant").write(reply)
 
-================= YIELD =================
+#================= YIELD =================
 
 elif menu == "📈 Yield Predictor":
 st.header("📈 Smart Yield Prediction")
