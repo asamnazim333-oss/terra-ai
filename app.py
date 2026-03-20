@@ -20,7 +20,8 @@ groq_client = OpenAI(
     base_url="https://api.groq.com/openai/v1"
 )
 
-gemini_client = genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+from google import genai
+gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # ================= HEADER =================
 st.title("🌍 Terra-AI")
