@@ -3,6 +3,7 @@ import requests
 from PIL import Image
 from openai import OpenAI
 import google.generativeai as genai
+import urllib.parse
 
 # ================= CONFIG =================
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
@@ -69,6 +70,8 @@ if menu == "🌦 Weather Intelligence":
                 st.error("City not found")
 
 # ================= SATELLITE =================
+  # at top of app.py
+
 elif menu == "🛰 Satellite Insights":
     st.header("🛰 Satellite Weather Insights (NASA)")
 
@@ -76,18 +79,27 @@ elif menu == "🛰 Satellite Insights":
 
     if st.button("Get Data"):
         with st.spinner("Fetching coordinates..."):
-            geo_url = f"https://nominatim.openstreetmap.org/search?city={city_name}&format=json"
+
+            # Encode city name for URL
+            city_encoded = urllib.parse.quote(city_name)
+
+            geo_url = f"https://nominatim.openstreetmap.org/search?city={city_encoded}&format=json"
+
+            headers = {
+                "User-Agent": "terra-ai-hackathon-app"
+            }
 
             try:
-                geo_res = requests.get(geo_url, timeout=10).json()  # timeout to prevent hanging
+                res = requests.get(geo_url, headers=headers, timeout=10)
+                geo_res = res.json()
             except requests.exceptions.JSONDecodeError:
-                st.error("Error decoding location data. Please check the city name or try again later.")
+                st.error("Error decoding location data. Nominatim may have rejected the request.")
                 geo_res = None
             except requests.exceptions.RequestException as e:
                 st.error(f"Error fetching location: {e}")
                 geo_res = None
 
-            if geo_res:
+            if geo_res and len(geo_res) > 0:
                 lat = geo_res[0]["lat"]
                 lon = geo_res[0]["lon"]
                 st.success(f"Coordinates: {lat}, {lon}")
