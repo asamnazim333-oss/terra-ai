@@ -76,12 +76,12 @@ if menu == "🌦 Weather Intelligence":
 # ================= SATELLITE===========
    
 
-
-
 elif menu == "🛰 Satellite Insights":
     st.header("🛰 Satellite Weather & Crop Insights (Global)")
 
     # Initialize session_state
+    if "satellite_clicked" not in st.session_state:
+        st.session_state.satellite_clicked = False
     if "geo_res" not in st.session_state:
         st.session_state.geo_res = None
     if "map_data" not in st.session_state:
@@ -92,6 +92,8 @@ elif menu == "🛰 Satellite Insights":
     city_name = st.text_input("Enter City Name", key="city_input")
 
     if st.button("Get Data"):
+        st.session_state.satellite_clicked = True
+
         with st.spinner("Fetching coordinates..."):
             city_encoded = urllib.parse.quote(city_name)
             geo_url = f"https://nominatim.openstreetmap.org/search?city={city_encoded}&format=json"
@@ -104,18 +106,24 @@ elif menu == "🛰 Satellite Insights":
                 st.error(f"Error fetching location: {e}")
                 st.session_state.geo_res = None
 
+    # Only run if button clicked
+    if st.session_state.satellite_clicked:
+
         if st.session_state.geo_res and len(st.session_state.geo_res) > 0:
-            # Convert to float and round
             lat = round(float(st.session_state.geo_res[0]["lat"]), 3)
             lon = round(float(st.session_state.geo_res[0]["lon"]), 3)
             st.success(f"Coordinates: {lat}, {lon}")
 
-            # Folium Map
-            m = folium.Map(location=[lat, lon], zoom_start=10)
-            folium.Marker([lat, lon], popup=city_name).add_to(m)
-            st_folium(m, width=700, height=400)
+            # Create map only once
+            if st.session_state.map_data is None:
+                m = folium.Map(location=[lat, lon], zoom_start=10)
+                folium.Marker([lat, lon], popup=city_name).add_to(m)
+                st.session_state.map_data = m
 
-            # Fetch 7-day forecast from Open-Meteo
+            # Display map
+            st_folium(st.session_state.map_data, width=700, height=400)
+
+            # Open-Meteo 7-day forecast
             with st.spinner("Fetching 7-day weather forecast..."):
                 try:
                     open_meteo_url = (
@@ -126,7 +134,6 @@ elif menu == "🛰 Satellite Insights":
                     )
                     weather_res = requests.get(open_meteo_url, timeout=10).json()
 
-                    # Convert to DataFrame
                     if "daily" in weather_res:
                         df = pd.DataFrame({
                             "date": weather_res["daily"]["time"],
@@ -143,10 +150,8 @@ elif menu == "🛰 Satellite Insights":
                 except Exception as e:
                     st.error(f"Error fetching weather data: {e}")
 
-            # Optional: NDVI overlay using Sentinel Hub (open-source)
-            st.info("🌱 NDVI overlay can be added here using Sentinel Hub / Open Data. Requires API key.")
         else:
-            st.error("City not found or invalid response from location service.")   
+            st.error("City not found or invalid response from location service.")
 
 # ================= AI ADVISORY =================
 elif menu == "🤖 AI Advisory":
