@@ -188,7 +188,7 @@ elif menu == "🤖 AI Advisory":
 st.success(response.choices[0].message.content)
 # ================= DISEASE =================
 # ================= DISEASE DETECTION =================
-elif menu == "🦠 Disease Detection":
+  elif menu == "🦠 Disease Detection":
     st.subheader("🦠 Crop Disease Detection")
     st.write("Upload or capture a leaf image")
 
