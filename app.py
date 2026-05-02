@@ -125,21 +125,51 @@ elif menu == "🤖 AI Advisory":
 
 # ================= DISEASE =================
 elif menu == "🦠 Disease Detection":
-    st.header("🦠 Disease Detection")
+    st.subheader("🦠 Crop Disease Detection")
+    st.write("Upload or capture a leaf image")
 
-    file = st.file_uploader("Upload Image")
+    with st.form("disease_form"):
+        cam = st.camera_input("Camera")
+        file = st.file_uploader("Upload", type=["jpg", "png", "jpeg"])
+        submit = st.form_submit_button("Analyze")
 
-    if file:
-        img = Image.open(file)
-        st.image(img)
+    img_file = cam if cam else file
 
-        if GEMINI_API_KEY:
-            try:
-                model = genai.GenerativeModel("models/gemini-2.5-flash")
-                response = model.generate_content(["Detect disease", img])
-                st.write(response.text)
-            except Exception as e:
-                st.error(e)
+    if img_file and submit:
+        try:
+            # Open and resize image
+            img = Image.open(img_file)
+            img.thumbnail((1024, 1024))
+            st.image(img, width=300)
+
+            if not GEMINI_API_KEY:
+                st.error("Gemini API key missing")
+            else:
+                with st.spinner("Analyzing..."):
+                    # Prompt for disease detection
+                    prompt = """
+                    Identify the plant disease in the image.
+                    Provide:
+                    - Disease Name
+                    - Confidence %
+                    - Possible Cause
+                    - Treatment/Remedy
+                    """
+
+                    try:
+                        # Use the correct model
+                        model = genai.GenerativeModel("models/gemini-2.5-flash")
+                        response = model.generate_content([prompt, img])
+
+                        st.success("✅ Disease Analysis Result")
+                        st.markdown(response.text)
+
+                    except Exception as e:
+                        st.warning("⚠ Gemini model failed")
+                        st.error(e)
+
+        except Exception as e:
+            st.error(f"Error processing image: {e}")
 
 # ================= CHATBOT =================
 elif menu == "💬 AI Copilot":
