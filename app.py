@@ -178,13 +178,14 @@ elif menu == "🤖 AI Advisory":
         Give farming advice.
         """
 
-        response = groq_client.responses.create(
-            model="openai/gpt-oss-20b",
-            input=prompt
-        )
+        response = groq_client.chat.completions.create(
+    model="llama3-70b-8192",   # ✅ valid Groq model
+    messages=[
+        {"role": "user", "content": prompt}
+    ]
+)
 
-        st.success(response.output_text)
-
+st.success(response.choices[0].message.content)
 # ================= DISEASE =================
 # ================= DISEASE DETECTION =================
 elif menu == "🦠 Disease Detection":
@@ -251,12 +252,14 @@ elif menu == "💬 AI Copilot":
         st.session_state.chat.append({"role": "user", "content": user_input})
         st.chat_message("user").write(user_input)
 
-        response = groq_client.responses.create(
-            model="openai/gpt-oss-20b",
-            input=user_input
-        )
+        response = groq_client.chat.completions.create(
+    model="llama3-70b-8192",
+    messages=[
+        {"role": "user", "content": user_input}
+    ]
+)
 
-        reply = response.output_text
+reply = response.choices[0].message.content
 
         st.session_state.chat.append({"role": "assistant", "content": reply})
         st.chat_message("assistant").write(reply)
