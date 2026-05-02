@@ -9,11 +9,11 @@ import folium
 from streamlit_folium import st_folium
 import os
 
-================= CONFIG =================
+#================= CONFIG =================
 
 st.set_page_config(page_title="🌍 Terra-AI", layout="wide")
 
-================= KEYS =================
+#================= KEYS =================
 
 OPENWEATHER_API_KEY = st.secrets["OPENWEATHER_API_KEY"]
 
@@ -26,12 +26,12 @@ GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", None)
 if GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 
-================= HEADER =================
+#================= HEADER =================
 
 st.title("🌍 Terra-AI")
 st.caption("Global AI Copilot for Smart Farming")
 
-================= MENU =================
+#================= MENU =================
 
 menu = st.sidebar.radio("Menu", [
 "🌦 Weather Intelligence",
@@ -46,7 +46,7 @@ menu = st.sidebar.radio("Menu", [
 "🧪 Fertilizer AI",
 ])
 
-================= WEATHER =================
+#================= WEATHER =================
 
 if menu == "🌦 Weather Intelligence":
 st.header("🌦 5-Day Weather Forecast")
@@ -84,9 +84,9 @@ if st.button("Get Forecast"):
         else:  
             st.error("City not found")
 
-================= SATELLITE =================
+#================= SATELLITE =================
 
-================= SATELLITE INSIGHTS =================
+#================= SATELLITE INSIGHTS =================
 
 elif menu == "🛰 Satellite Insights":
 st.header("🛰 Satellite Weather & Crop Insights (Global)")
@@ -165,7 +165,7 @@ if st.session_state.satellite_clicked:
     else:  
         st.error("City not found or invalid response from location service.")
 
-================= AI ADVISORY =================
+#================= AI ADVISORY =================
 
 elif menu == "🤖 AI Advisory":
 st.header("🤖 Smart Advisory")
@@ -195,9 +195,9 @@ messages=[
 
 st.success(response.choices[0].message.content)
 
-================= DISEASE =================
+#================= DISEASE =================
 
-================= DISEASE DETECTION =================
+#================= DISEASE DETECTION =================
 
 elif menu == "🦠 Disease Detection":
 st.subheader("🦠 Crop Disease Detection")
@@ -246,7 +246,7 @@ if img_file and submit:
     except Exception as e:  
         st.error(f"Error processing image: {e}")
 
-================= CHATBOT =================
+#================= CHATBOT =================
 
 elif menu == "💬 AI Copilot":
 st.header("💬 AI Farm Copilot")
@@ -540,7 +540,7 @@ if st.button("Get Recommendation"):
     )  
     st.success(rec)
 
-================= YIELD =================
+#================= YIELD =================
 
 elif menu == "📈 Yield Predictor":
 st.header("📈 Smart Yield Prediction")
